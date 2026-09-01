@@ -424,7 +424,9 @@ const CONFIG = {
   whatsapp: "5493804729192",
   aliasRegalo: "Isabella.94.",
   // Fotos de mini Isa que se muestran al final del muro de escraches:
-  mostrarArchivoFamiliar: true
+  mostrarArchivoFamiliar: true,
+  // Cuándo se desbloquea el muro de escraches (año, mes-1, día, hora, min):
+  aperturaMuro: new Date(2026, 11, 19, 21, 0)
 };
 
 // Conexión al muro en vivo (Firebase / Firestore)
@@ -569,7 +571,20 @@ const FIREBASE_CONFIG = {
 
 <!-- ════════════ VISTA 2: GALERÍA ════════════ -->
 <div id="vistaGaleria" class="vista">
-  <div class="gal-hero">
+  <div id="muroTeaser" style="display:none">
+    <div class="gal-hero">
+      <p class="eyebrow">Muy pronto</p>
+      <h2>El muro de los escraches</h2>
+      <p class="ornamento">✦ ✦ ✦</p>
+      <p>🔒 Este espacio se abre <b>la noche de la fiesta</b>, para que el recuerdo se construya en vivo: fotos que suben los invitados y aparecen al instante en el celular de todos. Volvé el <b>19 de diciembre a las 21:00</b> con el teléfono cargado y el ojo atento. 📸</p>
+      <p id="muroFalta" class="nota" style="font-size:1rem;margin-top:14px"></p>
+    </div>
+    <section style="padding-top:6px">
+      <p class="eyebrow" style="display:block;text-align:center;margin-bottom:16px">Mientras tanto, un adelanto del archivo familiar</p>
+      <div class="grid-fotos" id="teaserFotos"></div>
+    </section>
+  </div>
+  <div class="gal-hero" id="galHero">
     <p class="eyebrow">Recuerdos en vivo</p>
     <h2>El muro de los escraches</h2>
     <p class="ornamento">✦ ✦ ✦</p>
@@ -577,7 +592,7 @@ const FIREBASE_CONFIG = {
     <span class="aviso-demo" id="avisoDemo" style="display:none">Fotos de ejemplo · así se verá la galería</span>
   </div>
 
-  <section style="padding-top:20px">
+  <section style="padding-top:20px" id="secMuro">
     <div class="card doble-borde" id="cardSubirFoto">
       <label for="fNombre">Tu nombre</label>
       <input id="fNombre" type="text" placeholder="Para saber quién sacó la foto">
@@ -740,8 +755,8 @@ function fotosDeEjemplo(){
 function mostrar(el, txt){ if(txt) el.textContent = txt; el.style.display = 'block'; setTimeout(()=>{ el.style.display='none'; }, 6000); }
 
 /* ═══════════════ PINTAR GALERÍA ═══════════════ */
-function pintarFotos(items){
-  const grid = document.getElementById('gridFotos');
+function pintarFotos(items, gridId){
+  const grid = document.getElementById(gridId || 'gridFotos');
   grid.innerHTML = '';
   items.forEach(d=>{
     const btn = document.createElement('button');
@@ -949,11 +964,43 @@ document.getElementById('btnCopiarAlias').addEventListener('click', async (e)=>{
   }catch(err){ e.target.textContent = CONFIG.aliasRegalo; }
 });
 
+/* ═══════════════ CANDADO DEL MURO ═══════════════
+   Antes de la fecha de apertura, la galería muestra un teaser con
+   cuenta regresiva y el archivo familiar. A la hora señalada se
+   desbloquea sola, sin recargar. Truco para previsualizar: abrir
+   el link agregando ?muro=abierto al final. */
+let muroIniciado = false;
+function muroAbierto(){
+  return Date.now() >= CONFIG.aperturaMuro.getTime() || location.search.includes('muro=abierto');
+}
+function estadoMuro(){
+  const abierto = muroAbierto();
+  document.getElementById('galHero').style.display = abierto ? '' : 'none';
+  document.getElementById('secMuro').style.display = abierto ? '' : 'none';
+  document.getElementById('mensajes').style.display = abierto ? '' : 'none';
+  document.getElementById('muroTeaser').style.display = abierto ? 'none' : '';
+  document.getElementById('tabGal').textContent = abierto ? '📸 Galería' : '🔒 Galería';
+  if(abierto && !muroIniciado){
+    muroIniciado = true;
+    activarModoWeb();
+    suscribirGaleria();
+    suscribirMensajes();
+    suscribirCanciones();
+  }
+  if(!abierto){
+    const dif = CONFIG.aperturaMuro.getTime() - Date.now();
+    const dias = Math.floor(dif/86400000);
+    const horas = Math.floor(dif/3600000)%24;
+    const min = Math.floor(dif/60000)%60;
+    document.getElementById('muroFalta').textContent =
+      'Se desbloquea en ' + dias + (dias===1?' día, ':' días, ') + horas + ' h y ' + min + ' min ✨';
+  }
+}
+
 /* ═══════════════ CARGA INICIAL ═══════════════ */
-activarModoWeb();
-suscribirGaleria();
-suscribirMensajes();
-suscribirCanciones();
+pintarFotos(CONFIG.mostrarArchivoFamiliar ? fotosDeEjemplo() : [], 'teaserFotos');
+estadoMuro();
+setInterval(estadoMuro, 30000);
 </script>
 </body>
 </html>
