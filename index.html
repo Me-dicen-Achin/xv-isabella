@@ -432,9 +432,7 @@ const CONFIG = {
   // Fotos de mini Isa que se muestran al final del muro de escraches:
   mostrarArchivoFamiliar: true,
   // Cuándo se desbloquea el muro de escraches (año, mes-1, día, hora, min):
-  aperturaMuro: new Date(2026, 11, 19, 21, 0),
-  // Contraseña del panel de confirmaciones (al final de la invitación):
-  claveOrganizacion: "isabella2026"
+  aperturaMuro: new Date(2026, 11, 19, 21, 0)
 };
 
 // Conexión al muro en vivo (Firebase / Firestore)
@@ -523,20 +521,9 @@ const FIREBASE_CONFIG = {
     <h2>Confirmar asistencia</h2>
     <p class="ornamento">✦ ✦ ✦</p>
   </div>
-  <div class="card doble-borde">
-    <label for="rNombre">Nombre y apellido</label>
-    <input id="rNombre" type="text" autocomplete="name" placeholder="Ej: Juana Pérez">
-    <label>¿Vas a acompañarme?</label>
-    <div class="radio-fila">
-      <input type="radio" name="asiste" id="rSi" value="si" checked><label for="rSi">Sí, ahí estaré ✨</label>
-      <input type="radio" name="asiste" id="rNo" value="no"><label for="rNo">No voy a poder</label>
-    </div>
-    <label for="rMsj">Mensaje (opcional)</label>
-    <textarea id="rMsj" placeholder="Alergias, comentarios, lo que quieras avisar…"></textarea>
-    <button class="boton" id="btnRsvp">Confirmar ✨</button>
-    <a class="boton dorado" id="btnWsp" target="_blank" rel="noopener" style="margin-left:8px">o por WhatsApp</a>
-    <div class="ok" id="rsvpOk">¡Listo! Tu confirmación quedó registrada. Te espero ✨</div>
-    <div class="error-msg" id="rsvpError"></div>
+  <div class="card doble-borde" style="text-align:center">
+    <p>Para que sea bien simple, la asistencia se confirma directo por WhatsApp. Tocá el botón y enviá el mensaje que ya va a estar escrito: solo agregá tu nombre.</p>
+    <a class="boton" id="btnWsp" target="_blank" rel="noopener" style="margin-top:20px">Confirmar por WhatsApp</a>
     <p class="nota">Si podés, confirmá antes del 5 de diciembre así organizamos todo 🤍</p>
   </div>
 </section>
@@ -575,33 +562,6 @@ const FIREBASE_CONFIG = {
     <div class="ok" id="canOk">¡Anotada! El DJ ya la tiene en cuenta.</div>
     <div class="error-msg" id="canError"></div>
     <div id="listaCanciones" style="margin-top:18px"></div>
-  </div>
-</section>
-
-<section id="admin" class="reveal">
-  <div class="titulo-seccion">
-    <p class="eyebrow">Solo organización</p>
-    <h2>Confirmaciones</h2>
-    <p class="ornamento">✦ ✦ ✦</p>
-  </div>
-  <div class="card" id="orgLogin">
-    <label for="orgClave">Contraseña</label>
-    <input id="orgClave" type="password" placeholder="Solo para la familia organizadora">
-    <button class="boton" id="btnOrg">Ver lista</button>
-    <div class="error-msg" id="orgError"></div>
-  </div>
-  <div id="orgPanel" style="display:none">
-    <div class="totales">
-      <div class="card"><b id="tConfirmados">0</b><small>confirmaron</small></div>
-      <div class="card"><b id="tNoVienen">0</b><small>no pueden</small></div>
-      <div class="card"><b id="tRespuestas">0</b><small>respuestas</small></div>
-    </div>
-    <div class="card" style="margin-top:16px;overflow-x:auto">
-      <table>
-        <thead><tr><th>Nombre</th><th>¿Viene?</th><th>Mensaje</th><th>Cuándo</th></tr></thead>
-        <tbody id="orgFilas"></tbody>
-      </table>
-    </div>
   </div>
 </section>
 
@@ -984,60 +944,6 @@ function suscribirCanciones(){
     });
   }, err=> console.error('Canciones sin conexión:', err));
 }
-
-/* ═══════════════ CONFIRMACIÓN DE ASISTENCIA ═══════════════ */
-document.getElementById('btnRsvp').addEventListener('click', async ()=>{
-  const nombre = document.getElementById('rNombre').value.trim();
-  const errBox = document.getElementById('rsvpError');
-  if(!nombre){ mostrar(errBox, 'Escribí tu nombre para confirmar.'); return; }
-  if(!HAY_MURO){ mostrar(errBox, 'No se pudo conectar. Confirmá por WhatsApp 🙏'); return; }
-  const btn = document.getElementById('btnRsvp');
-  btn.disabled = true;
-  try{
-    await db.collection('confirmaciones').add({
-      nombre: nombre.slice(0,60),
-      asiste: document.getElementById('rSi').checked ? 'si' : 'no',
-      mensaje: document.getElementById('rMsj').value.trim().slice(0,300),
-      ts: Date.now()
-    });
-    mostrar(document.getElementById('rsvpOk'));
-    document.getElementById('rNombre').value = '';
-    document.getElementById('rMsj').value = '';
-  }catch(e){
-    console.error(e);
-    mostrar(errBox, 'No se pudo guardar. Probá de nuevo o confirmá por WhatsApp.');
-  }finally{ btn.disabled = false; }
-});
-
-/* ═══════════════ PANEL DE ORGANIZACIÓN ═══════════════ */
-document.getElementById('btnOrg').addEventListener('click', ()=>{
-  const clave = document.getElementById('orgClave').value;
-  if(clave !== CONFIG.claveOrganizacion){
-    mostrar(document.getElementById('orgError'), 'Contraseña incorrecta.');
-    return;
-  }
-  document.getElementById('orgLogin').style.display = 'none';
-  document.getElementById('orgPanel').style.display = 'block';
-  if(!HAY_MURO) return;
-  db.collection('confirmaciones').orderBy('ts','desc').limit(500).onSnapshot(snap=>{
-    const filas = document.getElementById('orgFilas');
-    filas.innerHTML = '';
-    let si = 0, no = 0;
-    snap.docs.forEach(doc=>{
-      const d = doc.data();
-      if(d.asiste === 'si') si++; else no++;
-      const tr = document.createElement('tr');
-      const f = d.ts ? new Date(d.ts).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'}) : '';
-      [d.nombre, d.asiste==='si'?'Sí ✨':'No', d.mensaje||'—', f].forEach(txt=>{
-        const td = document.createElement('td'); td.textContent = txt; tr.appendChild(td);
-      });
-      filas.appendChild(tr);
-    });
-    document.getElementById('tConfirmados').textContent = si;
-    document.getElementById('tNoVienen').textContent = no;
-    document.getElementById('tRespuestas').textContent = si + no;
-  }, err=> console.error('Panel sin conexión:', err));
-});
 
 /* ═══════════════ RESPALDO POR WHATSAPP ═══════════════ */
 function activarModoWeb(){
