@@ -40,19 +40,6 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    match /confirmaciones/{id} {
-      allow read: if true;
-      allow create: if request.resource.data.keys().hasOnly(['nombre','asiste','mensaje','ts'])
-        && request.resource.data.nombre is string
-        && request.resource.data.nombre.size() > 0
-        && request.resource.data.nombre.size() <= 60
-        && request.resource.data.asiste in ['si','no']
-        && request.resource.data.mensaje is string
-        && request.resource.data.mensaje.size() <= 300
-        && request.resource.data.ts is number;
-      allow update, delete: if false;
-    }
-
     match /{document=**} {
       allow read, write: if false;
     }
