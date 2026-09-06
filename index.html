@@ -427,7 +427,8 @@ const CONFIG = {
   mapaBusqueda: "Saramama Eventos, La Rioja, Argentina",
   dressCode: "Elegante sport",
   dressCodeNota: "Pedido especial de la quinceañera: evitá venir de azul o celeste 🙏",
-  whatsapp: "5493804729192",
+  whatsapp: "5493804729192",       // WhatsApp de la mamá (confirmaciones de sus invitados)
+  whatsappPapa: "5493804952270",   // WhatsApp de Rodolfo, el papá (confirmaciones de sus invitados)
   aliasRegalo: "Isabella.94.",
   // Fotos de mini Isa que se muestran al final del muro de escraches:
   mostrarArchivoFamiliar: true,
@@ -522,8 +523,9 @@ const FIREBASE_CONFIG = {
     <p class="ornamento">✦ ✦ ✦</p>
   </div>
   <div class="card doble-borde" style="text-align:center">
-    <p>Para que sea bien simple, la asistencia se confirma directo por WhatsApp. Tocá el botón y enviá el mensaje que ya va a estar escrito: solo agregá tu nombre.</p>
-    <a class="boton" id="btnWsp" target="_blank" rel="noopener" style="margin-top:20px">Confirmar por WhatsApp</a>
+    <p>La asistencia se confirma directo por WhatsApp, <b>a quien te haya invitado</b>. Tocá el botón que corresponda y enviá el mensaje que ya va a estar escrito: completá tu nombre y, si tenés alguna restricción alimentaria (celiaquía, diabetes, vegetariano/a, alergias…), agregala ahí mismo así lo tenemos en cuenta para el menú.</p>
+    <a class="boton" id="btnWspMama" target="_blank" rel="noopener" style="margin-top:20px">💌 Invitados de la mamá</a>
+    <a class="boton" id="btnWspPapa" target="_blank" rel="noopener" style="margin-top:14px;margin-left:8px">💌 Invitados del papá</a>
     <p class="nota">Si podés, confirmá antes del 5 de diciembre así organizamos todo 🤍</p>
   </div>
 </section>
@@ -659,8 +661,12 @@ document.getElementById('aliasTexto').textContent = CONFIG.aliasRegalo;
 const q = encodeURIComponent(CONFIG.mapaBusqueda);
 document.getElementById('mapaFrame').src = "https://www.google.com/maps?q=" + q + "&output=embed";
 document.getElementById('btnComoLlegar').href = "https://www.google.com/maps/search/?api=1&query=" + q;
-document.getElementById('btnWsp').href = "https://wa.me/" + CONFIG.whatsapp +
-  "?text=" + encodeURIComponent("¡Hola! Confirmo mi asistencia a los XV de " + CONFIG.nombre + " el 19/12 ✨ Mi nombre es: ");
+const msjConfirmacion = encodeURIComponent(
+  "¡Hola! Confirmo mi asistencia a los XV de " + CONFIG.nombre + " el 19/12 ✨\n" +
+  "Mi nombre es: \n" +
+  "Restricción alimentaria (si tenés): ");
+document.getElementById('btnWspMama').href = "https://wa.me/" + CONFIG.whatsapp + "?text=" + msjConfirmacion;
+document.getElementById('btnWspPapa').href = "https://wa.me/" + CONFIG.whatsappPapa + "?text=" + msjConfirmacion;
 
 /* ═══════════════ MURO EN VIVO (FIRESTORE) ═══════════════
    Si Firebase carga bien, fotos, firmas y canciones funcionan en
